@@ -1,23 +1,37 @@
 from flask import Flask, render_template_string, render_template
-import json, os
+import os
+import pymysql
 
 app = Flask(__name__)
 import kartta
 app.register_blueprint(kartta.bp)
 
-TIEDOSTO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "laskuri.json")
-
 def kasvata(sivu):
-    try:
-        with open(TIEDOSTO) as f:
-            data = json.load(f)
-    except Exception:
-        data = {}
-    data[sivu] = data.get(sivu, 0) + 1
-    with open(TIEDOSTO, "w") as f:
-        json.dump(data, f)
-    return data[sivu]
+    db = pymysql.connect(
+        host="localhost",
+        user="flask",
+	password="Salasana123!",
+        database="viikko2"
+    )
 
+    cur = db.cursor()
+
+    cur.execute(
+        "UPDATE laskuri SET kaynnit = kaynnit + 1 WHERE id = 1"
+    )
+
+    db.commit()
+
+    cur.execute(
+        "SELECT kaynnit FROM laskuri WHERE id = 1"
+    )
+
+    maara = cur.fetchone()[0]
+
+    cur.close()
+    db.close()
+
+    return maara
 POHJA = """<!DOCTYPE html>
 <html lang="fi">
 <head>
